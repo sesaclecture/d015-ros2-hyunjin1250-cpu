@@ -17,7 +17,12 @@ from pathlib import Path
 def _run(cmd: str, cwd: str | None = None) -> tuple[int, str, str]:
     """명령어 실행 wrapper: returncode, stdout, stderr 반환"""
     result = subprocess.run(
-        cmd, check=False, shell=True, cwd=cwd, capture_output=True, text=True
+        f"bash -lc '{cmd}'",
+        check=False,
+        shell=True,
+        cwd=cwd,
+        capture_output=True,
+        text=True,
     )
     return result.returncode, result.stdout, result.stderr
 
@@ -27,32 +32,31 @@ def task_source_ros() -> tuple[int, str, str]:
     문제 1:
     ROS2 Jazzy 환경을 불러오는 명령어를 반환하시오.
     """
-    # TODO: 여기에 코드를 작성하시오
-    cmd = ""
-    return _run(f"bash -lc '{cmd}'")
+    # source 성공 후, 설정된 환경 변수를 출력하기 위해 'env' 명령어를 사용합니다.
+    cmd = "source /opt/ros/jazzy/setup.bash && env"
+    return _run(cmd)
 
 
 def task_pkg_create_cmd() -> tuple[int, str, str]:
     """
     문제 2:
     주어진 workspace/src 밑에 ros_pkg를 생성하는 명령어를 반환하시오.
-    조건:
-      - --build-type ament_python
-      - workspace는 ~/ws_ros2로 지정한다
-      - 빌드 타입은 ament_python 사용
-      - 라이센스는 MIT 사용
-      - 패키지 디펜던시는 rclpy와 std_msgs가 있음
-      - maintainer이름은 kcci로 지정
-      - maintainer email은 kcci@kcci.com으로 지정
-      - 코드 설명은 D015 homework ROS2 workspace로 지정
     """
-    # TODO: 여기에 코드를 작성하시오
-    workspace = Path.home()
-    src_dir = ""
+    workspace = Path.home() / "ws_ros2"
+    src_dir = workspace / "src"
     src_dir.mkdir(parents=True, exist_ok=True)
 
-    cmd = ""
-    return _run(cmd, cwd=os.path.join(workspace, "src"))
+    cmd = (
+        "source /opt/ros/jazzy/setup.bash && "
+        "ros2 pkg create ros_pkg "
+        "--build-type ament_python "
+        '--license "MIT" '
+        "--dependencies rclpy std_msgs "
+        '--maintainer-name "kcci" '
+        '--maintainer-email "kcci@kcci.com" '
+        '--description "D015 homework ROS2 workspace"'
+    )
+    return _run(cmd, cwd=src_dir)
 
 
 def task_colcon_build_cmd() -> tuple[int, str, str]:
@@ -61,9 +65,9 @@ def task_colcon_build_cmd() -> tuple[int, str, str]:
     workspace(~/ws_ros2) 경로에서 ros2 빌드하는 명령어를 반환하시오.
     """
     # TODO: 여기에 코드를 작성하시오
-    workspace = Path.home() + "???"
+    workspace = Path.home() / "ws_ros2"
     workspace.mkdir(parents=True, exist_ok=True)
-    cmd = "???"
+    cmd = "source /opt/ros/jazzy/setup.bash && colcon build"
     return _run(cmd, cwd=workspace)
 
 
@@ -73,7 +77,7 @@ def task_xhost_cmd() -> tuple[int, str, str]:
     root 유저에 X 권한을 여는 xhost 명령어를 반환하시오.
     """
     # TODO: 여기에 코드를 작성하시오
-    cmd = "..."
+    cmd = "xhost +"
     return _run(cmd)
 
 
@@ -93,8 +97,18 @@ def task_docker_run_cmd() -> str:
     """
     # TDO: 여기에 코드를 작성하시오
     return (
-        "docker run -it --rm --name ...."
+        "docker run -it --rm "
+        "--name humble-gui "
+        "--network=host "
+        '-e DISPLAY=$DISPLAY ' 
+        '-e ROS_DOMAIN_ID=24 ' 
+        '-e RMW_IMPLEMENTATION=rmw_cyclonedds_cpp '
+        '-v /tmp/.X11-unix:/tmp/.X11-unix:rw '
+        'arm64v8/ros:humble '
+        'bash'
     )
+
+
 
 
 if __name__ == "__main__":
